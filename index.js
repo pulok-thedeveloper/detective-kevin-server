@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 // middle wares
@@ -16,13 +16,38 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         const serviceCollection = client.db('detectiveKevin').collection('services');
+        const closedCaseCollection = client.db('detectiveKevin').collection('closedCase');
 
+        //All Services
         app.get('/services', async(req,res)=>{
             const query = {}
             const cursor = serviceCollection.find(query);
             const services = await cursor.toArray();
             res.send(services);
+        });
+
+        // Individual Service
+        app.get('/services/:id', async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const service = await serviceCollection.findOne(query);
+            res.send(service);
+        });
+
+        // Post Service
+        app.post('/services', async(req, res)=>{
+            const service = req.body;
+            const result = await serviceCollection.insertOne(service);
+            res.send(result);
         })
+
+        // All Closed Cases
+        app.get('/closedcases', async(req,res)=>{
+            const query = {}
+            const cursor = closedCaseCollection.find(query);
+            const closedcases = await cursor.toArray();
+            res.send(closedcases);
+        });
 
     }
     finally{
