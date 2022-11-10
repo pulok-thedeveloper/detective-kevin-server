@@ -16,7 +16,10 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         const serviceCollection = client.db('detectiveKevin').collection('services');
+
         const closedCaseCollection = client.db('detectiveKevin').collection('closedCase');
+
+        const reviewCollection = client.db('detectiveKevin').collection('reviews');
 
         //All Services
         app.get('/services', async(req,res)=>{
@@ -39,7 +42,7 @@ async function run(){
             const service = req.body;
             const result = await serviceCollection.insertOne(service);
             res.send(result);
-        })
+        });
 
         // All Closed Cases
         app.get('/closedcases', async(req,res)=>{
@@ -48,6 +51,58 @@ async function run(){
             const closedcases = await cursor.toArray();
             res.send(closedcases);
         });
+
+        //All reviews
+        app.get('/reviews', async(req,res)=>{
+            let query ={};
+            if(req.query.email){
+                query={
+                    email: req.query.email
+                }
+            }
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        // Reviews based on services
+        app.get('/reviews/:id', async(req,res)=>{
+            const id = req.params.id;
+            const query = {serviceId: id};
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+
+        // Post Reviews
+        app.post('/reviews', async(req, res)=>{
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        });
+
+        app.put('/reviews/:id', async(req,res) =>{
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const review =req.body;
+            const option = {upsert: true};
+            const updatedReview = {
+                $set: {
+                    review: review
+                }
+            }
+            const result = await reviewCollection.updateOne(filter, updatedReview, option);
+            res.send(result);
+        })
+
+        // Post Delete
+        app.delete('/reviews/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result);
+        })
 
     }
     finally{
