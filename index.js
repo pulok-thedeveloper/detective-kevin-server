@@ -24,7 +24,8 @@ async function run(){
         //All Services
         app.get('/services', async(req,res)=>{
             const query = {}
-            const cursor = serviceCollection.find(query);
+            const sort = {index: -1}
+            const cursor = serviceCollection.find(query).sort(sort);
             const services = await cursor.toArray();
             res.send(services);
         });
@@ -75,6 +76,7 @@ async function run(){
         });
 
 
+
         // Post Reviews
         app.post('/reviews', async(req, res)=>{
             const review = req.body;
@@ -82,10 +84,12 @@ async function run(){
             res.send(result);
         });
 
+        // Update Review
         app.put('/reviews/:id', async(req,res) =>{
             const id = req.params.id;
             const filter = {_id: ObjectId(id)};
             const review =req.body;
+            console.log(updatedReview);
             const option = {upsert: true};
             const updatedReview = {
                 $set: {
